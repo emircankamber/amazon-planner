@@ -16,8 +16,7 @@ from db import get_conn
 # ── Crypto setup ───────────────────────────────────────────────────────────────
 SECRET_KEY: str = os.environ.get("SECRET_KEY", os.urandom(32).hex())
 _signer = URLSafeTimedSerializer(SECRET_KEY, salt="session")
-_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
+_pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__truncate_error=False)
 SESSION_MAX_AGE = 60 * 60 * 24 * 30  # 30 gün
 
 
