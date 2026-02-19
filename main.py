@@ -341,8 +341,8 @@ def register(
     password: str = Form(...),
     password2: str = Form(...),
 ):
-    if len(password) < 8:
-        return RedirectResponse("/register?error=Şifre+en+az+8+karakter+olmalı", status_code=303)
+    if len(password) < 6:
+        return RedirectResponse("/register?error=Şifre+en+az+6+karakter+olmalı", status_code=303)
     if password != password2:
         return RedirectResponse("/register?error=Şifreler+eşleşmiyor", status_code=303)
     try:
