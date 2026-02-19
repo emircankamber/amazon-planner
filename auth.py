@@ -1,8 +1,5 @@
 """
 auth.py — Passlib/bcrypt şifre hashing + itsdangerous imzalı cookie session.
-
-SECRET_KEY ortam değişkeninden okunur; yoksa geliştirme için rastgele üretilir
-(Render'da render.yaml'daki generateValue ile otomatik atanır).
 """
 from __future__ import annotations
 
@@ -26,11 +23,11 @@ SESSION_MAX_AGE = 60 * 60 * 24 * 30  # 30 gün
 
 # ── Password helpers ───────────────────────────────────────────────────────────
 def hash_password(plain: str) -> str:
-    return _pwd_ctx.hash(plain)
+    return _pwd_ctx.hash(plain[:72])
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return _pwd_ctx.verify(plain, hashed)
+    return _pwd_ctx.verify(plain[:72], hashed)
 
 
 # ── Session cookie ─────────────────────────────────────────────────────────────
@@ -47,7 +44,6 @@ def decode_session_cookie(token: str) -> Optional[int]:
 
 # ── DB helpers ─────────────────────────────────────────────────────────────────
 def create_user(email: str, plain_password: str) -> int:
-    """Yeni kullanıcı oluşturur; başarıyla user_id döner, duplicate'de hata fırlatır."""
     conn = get_conn()
     cur = conn.cursor()
     try:
@@ -56,7 +52,7 @@ def create_user(email: str, plain_password: str) -> int:
             (email.strip().lower(), hash_password(plain_password)),
         )
         conn.commit()
-        return cur.lastrowid  # type: ignore[return-value]
+        return cur.lastrowid
     except sqlite3.IntegrityError:
         raise ValueError("Bu e-posta adresi zaten kayıtlı.")
     finally:
@@ -64,7 +60,6 @@ def create_user(email: str, plain_password: str) -> int:
 
 
 def authenticate_user(email: str, plain_password: str) -> Optional[int]:
-    """Kimlik doğrular; başarılıysa user_id, değilse None döner."""
     conn = get_conn()
     row = conn.execute(
         "SELECT id, hashed_pw FROM users WHERE email=?",
@@ -80,7 +75,6 @@ def authenticate_user(email: str, plain_password: str) -> Optional[int]:
 
 # ── FastAPI dependency ─────────────────────────────────────────────────────────
 def get_current_user(session: Optional[str] = Cookie(default=None)) -> int:
-    """Route dependency — oturum yoksa 302 yerine 401 (AJAX için) veya redirect için kullanın."""
     if not session:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Giriş gerekli")
     user_id = decode_session_cookie(session)
