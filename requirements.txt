@@ -1,5 +1,7 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-multipart
 openpyxl
-
+passlib[bcrypt]
+python-jose[cryptography]
+itsdangerous
